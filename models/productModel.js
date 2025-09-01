@@ -7,6 +7,7 @@ const ProductPageSchema = new mongoose.Schema(
     youtubeURL: { type: String },
     campaignImages: [{ type: String }],
     category: { type: String, },
+    status:{ type: String, default:"Active" },
     preority: { type: String, },
       goalAmount: { type: Number,},
 
@@ -20,7 +21,6 @@ const ProductPageSchema = new mongoose.Schema(
           mobile: { type: String },
           amount: { type: Number },
           transactionId: { type: String },
-          status: { type: String },
           id: { type: String },
           donatedAt: { type: Date, default: Date.now },
         },

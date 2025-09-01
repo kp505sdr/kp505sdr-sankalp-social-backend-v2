@@ -7,7 +7,7 @@ const { createProductPage, getAllProductPages, getProductPageById, deleteProduct
 router.post("/create-product", createProductPage);
 router.get("/get-all-product", getAllProductPages);
 router.get("/product/:id", getProductPageById);
-router.put("/update-on-donation/:id", updateProductPageGetdonation);
+// router.put("/update-on-donation/:id", updateProductPageGetdonation);
 router.delete("/product/:id", deleteProductPage);
 
 module.exports = router;

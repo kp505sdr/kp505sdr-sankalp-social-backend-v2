@@ -7,6 +7,7 @@ const Donation = require('../models/donationModel');
 const sendEmail = require('../utils/sendEmail');
 const PDFDocument = require("pdfkit");
 const path = require("path");
+const { updateProductPageGetdonation } = require('./productPageController');
 
 
  
@@ -77,7 +78,13 @@ const verifyPayment = async (req, res) => {
       });
 
       await donation.save();
-
+      await updateProductPageGetdonation( name,
+          email,
+          mobile,
+          amount,
+          razorpay_payment_id,
+          campaignId
+          )
       // ✅ Send Email to Donor
       if (email) {
         const subject = "Thank you for your donation 🙏";
@@ -108,45 +115,8 @@ const verifyPayment = async (req, res) => {
   }
 };
 
-// const certiFicate = async (req, res) => {
-//   try {
-//     const { razorpay_payment_id } = req.params;
 
-//     if (!razorpay_payment_id) {
-//       return res.status(400).json({ message: "Payment ID is required" });
-//     }
-
-//     const donation = await Donation.findOne({ razorpay_payment_id });
-//     if (!donation) {
-//       return res.status(404).json({ message: "Donation not found" });
-//     }
-
-//     // ✅ Set headers for file download
-//     res.setHeader(
-//       "Content-Disposition",
-//       `attachment; filename=Donation_Certificate_${razorpay_payment_id}.pdf`
-//     );
-//     res.setHeader("Content-Type", "application/pdf");
-
-//     // Generate PDF
-//     const doc = new PDFDocument({ size: "A4", margin: 50 });
-//     doc.pipe(res);
-
-//     doc.fontSize(24).fillColor("green").text("Donation Certificate", { align: "center" }).moveDown(2);
-//     doc.fontSize(16).fillColor("black").text(`This is to certify that ${donation?.name || "Donor"}`, { align: "center" }).moveDown(1);
-//     doc.text(`has generously donated $${donation.amount || "N/A"} to our cause.`, { align: "center" }).moveDown(1);
-//     doc.text(`Transaction ID: ${donation.razorpay_payment_id}`, { align: "center" }).moveDown(1);
-//     doc.text(`Date: ${donation.createdAt? donation.createdAt.toDateString() : "N/A"}`, { align: "center" }).moveDown(2);
-//     doc.fontSize(14).text("Thank you for your contribution!", { align: "center" }).moveDown(1);
-
-//     doc.end();
-//   } catch (error) {
-//     console.error("❌ Error generating certificate:", error);
-//     if (!res.headersSent) {
-//       res.status(500).json({ message: "Server error generating certificate" });
-//     }
-//   }
-// };
+// -----------------------------------------------------------------------------------------------
 const certiFicate = async (req, res) => {
   try {
     const { razorpay_payment_id } = req.params;

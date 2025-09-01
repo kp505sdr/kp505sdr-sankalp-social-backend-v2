@@ -44,48 +44,54 @@ const getProductPageById = async (req, res) => {
 };
 
 // UPDATE WHEN GET DONATION
-const updateProductPageGetdonation = async (req, res) => {
+const updateProductPageGetDonation = async (
+  name,
+  email,
+  mobile,
+  amount,
+  razorpay_payment_id,
+  campaignId
+) => {
   try {
-    const { name, email, mobile, amount, transactionId, status } = req.body;
+    // Validate required fields
+    if (!campaignId) throw new Error("Campaign ID is required");
+    if (!razorpay_payment_id || !amount) throw new Error("Payment ID and amount are required");
 
-    // Find the product page first
-    const productPage = await ProductPage.findById(req.params.id);
-
-    if (!productPage) return res.status(404).json({ message: "Not found" });
-
-    // If donation is provided, add to donors array
-    if (req.body.transactionId &&  amount) {
-      const newDonor = {
-        name,
-        email,
-        mobile,
-        amount,
-        transactionId,
-        status,
-        id: `DONOR-${Date.now()}`, // optional unique id
-        donatedAt: new Date(),
-      };
-
-      productPage.donation.donors.push(newDonor);
-      productPage.donation.raised += amount;
-
+    // Find the product page
+    const productPage = await ProductPage.findById(campaignId);
+    if (!productPage) {
+      throw new Error("Campaign not found");
     }
 
-    // Update other fields if needed
-    if (req.body.title) productPage.title = req.body.title;
-    if (req.body.description) productPage.description = req.body.description;
-    if (req.body.videoUrl) productPage.videoUrl = req.body.videoUrl;
-    if (req.body.campaignImages) productPage.campaignImages = req.body.campaignImages;
-    if (req.body.category) productPage.category = req.body.category;
-    if (req.body.campaignDetails) productPage.campaignDetails = req.body.campaignDetails;
+    // Add donation details
+    const newDonor = {
+      name,
+      email,
+      mobile,
+      amount,
+      transactionId: razorpay_payment_id,
+      id: `DONOR-${Date.now()}`,
+      donatedAt: new Date(),
+    };
 
+    // Ensure donation object exists
+    if (!productPage.donation) {
+      productPage.donation = { donors: [], raised: 0 };
+    }
+
+    productPage.donation.donors.push(newDonor);
+    productPage.donation.raised += amount;
+
+    // Save and return updated product page
     const updated = await productPage.save();
+    return updated;
 
-    res.json(updated);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error("Error updating donation:", err.message);
+    throw err; // Re-throw error for higher-level handling if needed
   }
 };
+
 
 
 
