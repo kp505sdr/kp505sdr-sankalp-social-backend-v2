@@ -267,7 +267,6 @@ module.exports = {
   updateProductPage,
   getAllProductPages,
   getProductPageById,
-  updateProductPageGetdonation,
   deleteProductPage,
   slideFun,
   getSlides,
