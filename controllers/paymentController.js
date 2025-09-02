@@ -44,6 +44,84 @@ const createOrder= async (req, res) => {
 
 
 
+// const verifyPayment = async (req, res) => {
+//   try {
+//     const {
+//       razorpay_order_id,
+//       razorpay_payment_id,
+//       razorpay_signature,
+//       name,
+//       email,
+//       mobile,
+//       amount,
+//       campaignId,
+//     } = req.body;
+
+//     const sign = razorpay_order_id + "|" + razorpay_payment_id;
+//     const expectedSign = crypto
+//       .createHmac("sha256", process.env.RAZORPAY_KEY_SECRET)
+//       .update(sign.toString())
+//       .digest("hex");
+
+//     if (razorpay_signature === expectedSign) {
+//       // ✅ Save donation in DB
+//       const donation = new Donation({
+//         campaignId,
+//         name,
+//         email,
+//         mobile,
+//         amount,
+//         razorpay_order_id,
+//         razorpay_payment_id,
+//         razorpay_signature,
+//         status: "success",
+//       });
+
+//       await donation.save();
+//       await updateProductPageGetdonation( name,
+//           email,
+//           mobile,
+//           amount,
+//           razorpay_payment_id,
+//           campaignId
+//           )
+//       // ✅ Send Email to Donor
+//       if (email) {
+//         const subject = "Thank you for your donation 🙏";
+//         const html = `
+//           <h2>Hi ${name},</h2>
+//           <p>Thank you for supporting our campaign ❤️</p>
+//           <p><strong>Amount:</strong> ₹${amount}</p>
+//           <p><strong>Payment ID:</strong> ${razorpay_payment_id}</p>
+//           <p><strong>Order ID:</strong> ${razorpay_order_id}</p>
+//           <br/>
+//           <p>We appreciate your generosity!</p>
+//           <p>- Team Fundraiser</p>
+//         `;
+//         await sendEmail(email, subject, html);
+//       }
+
+//       return res.json({
+//         success: true,
+//         message: "Payment verified & donation saved",
+//         donation,
+//       });
+//     } else {
+//       return res.status(400).json({ success: false, message: "Invalid signature" });
+//     }
+//   } catch (err) {
+//     console.error("Payment verification error:", err);
+//     res.status(500).json({ success: false, message: "Verification failed" });
+//   }
+// };
+
+
+// -----------------------------------------------------------------------------------------------
+
+
+
+
+
 const verifyPayment = async (req, res) => {
   try {
     const {
@@ -57,38 +135,44 @@ const verifyPayment = async (req, res) => {
       campaignId,
     } = req.body;
 
-    const sign = razorpay_order_id + "|" + razorpay_payment_id;
+  
+    // Create expected signature
+    const sign = `${razorpay_order_id}|${razorpay_payment_id}`;
     const expectedSign = crypto
       .createHmac("sha256", process.env.RAZORPAY_KEY_SECRET)
-      .update(sign.toString())
+      .update(sign)
       .digest("hex");
 
-    if (razorpay_signature === expectedSign) {
-      // ✅ Save donation in DB
-      const donation = new Donation({
-        campaignId,
-        name,
-        email,
-        mobile,
-        amount,
-        razorpay_order_id,
-        razorpay_payment_id,
-        razorpay_signature,
-        status: "success",
-      });
+   
 
-      await donation.save();
-      await updateProductPageGetdonation( name,
-          email,
-          mobile,
-          amount,
-          razorpay_payment_id,
-          campaignId
-          )
-      // ✅ Send Email to Donor
-      if (email) {
-        const subject = "Thank you for your donation 🙏";
-        const html = `
+    if (expectedSign !== razorpay_signature) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid signature - Keys might be wrong or data mismatch",
+      });
+    }
+
+    // Save donation
+    const donation = new Donation({
+      campaignId,
+      name,
+      email,
+      mobile,
+      amount,
+      razorpay_order_id,
+      razorpay_payment_id,
+      razorpay_signature,
+      status: "success",
+    });
+
+    await donation.save();
+    
+
+    if (email) {
+      await sendEmail(
+        email,
+        "Thank you for your donation 🙏",
+        `
           <h2>Hi ${name},</h2>
           <p>Thank you for supporting our campaign ❤️</p>
           <p><strong>Amount:</strong> ₹${amount}</p>
@@ -97,26 +181,23 @@ const verifyPayment = async (req, res) => {
           <br/>
           <p>We appreciate your generosity!</p>
           <p>- Team Fundraiser</p>
-        `;
-        await sendEmail(email, subject, html);
-      }
-
-      return res.json({
-        success: true,
-        message: "Payment verified & donation saved",
-        donation,
-      });
-    } else {
-      return res.status(400).json({ success: false, message: "Invalid signature" });
+        `
+      );
     }
+
+    return res.json({
+      success: true,
+      message: "Payment verified & donation saved",
+      donation,
+    });
+
   } catch (err) {
-    console.error("Payment verification error:", err);
+    console.error("❌ Payment verification error:", err);
     res.status(500).json({ success: false, message: "Verification failed" });
   }
 };
 
 
-// -----------------------------------------------------------------------------------------------
 const certiFicate = async (req, res) => {
   try {
     const { razorpay_payment_id } = req.params;

@@ -43,24 +43,30 @@ const getProductPageById = async (req, res) => {
   }
 };
 
+
+
 // UPDATE WHEN GET DONATION
-const updateProductPageGetDonation = async (
-  name,
-  email,
-  mobile,
-  amount,
-  razorpay_payment_id,
-  campaignId
-) => {
+const updateProductPageGetDonation = async (req, res) => {
   try {
+  
+
+    // Handle if data is nested inside DonationData
+    const data = req.body.DonationData || req.body;
+
+    const { name, email, mobile, amount, razorpay_payment_id, campaignId } = data;
+
     // Validate required fields
-    if (!campaignId) throw new Error("Campaign ID is required");
-    if (!razorpay_payment_id || !amount) throw new Error("Payment ID and amount are required");
+    if (!campaignId) {
+      return res.status(400).json({ success: false, message: "Campaign ID is required" });
+    }
+    if (!razorpay_payment_id || !amount) {
+      return res.status(400).json({ success: false, message: "Payment ID and amount are required" });
+    }
 
     // Find the product page
     const productPage = await ProductPage.findById(campaignId);
     if (!productPage) {
-      throw new Error("Campaign not found");
+      return res.status(404).json({ success: false, message: "Campaign not found" });
     }
 
     // Add donation details
@@ -84,15 +90,18 @@ const updateProductPageGetDonation = async (
 
     // Save and return updated product page
     const updated = await productPage.save();
-    return updated;
+
+    return res.status(200).json({
+      success: true,
+      message: "Donation updated successfully",
+      data: updated,
+    });
 
   } catch (err) {
     console.error("Error updating donation:", err.message);
-    throw err; // Re-throw error for higher-level handling if needed
+    return res.status(500).json({ success: false, message: err.message });
   }
 };
-
-
 
 
 
@@ -269,6 +278,7 @@ module.exports = {
   getProductPageById,
   deleteProductPage,
   slideFun,
+  updateProductPageGetDonation,
   getSlides,
   updateSlide,
   deleteSlide
