@@ -6,7 +6,15 @@ const userSchema = new mongoose.Schema(
     name: { type: String },
     email: { type: String },
     picture: { type: String },
-    isAdmin: { type: Boolean, default: false }
+    isAdmin: { type: Boolean, default: false },
+    isVolunteer:{
+    type:Boolean,
+    default:false,
+  },
+  volunteerId:{
+    type:Number,
+ 
+  },
   },
   { timestamps: true } // Correct way to enable createdAt & updatedAt
 );

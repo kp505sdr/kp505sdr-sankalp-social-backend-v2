@@ -1,5 +1,6 @@
 const bcrypt = require('bcryptjs');
 const User = require('../models/userModel.js');
+const Donation = require('../models/donationModel.js');
 
 
 
@@ -128,7 +129,35 @@ const updateAdminStatus = async (req, res) => {
 
 
 
-module.exports = { registerUser,getAllUsers,updateUser,updateAdminStatus};
+
+// Get all donations with pagination
+const getDonations = async (req, res) => {
+  try {
+    // Fetch all donations with campaign details if needed
+    const donations = await Donation.find().populate("campaignId", "title description");
+
+    if (!donations || donations.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: "No donations found",
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: "Donations fetched successfully",
+      data: donations,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: "Server error: " + error.message,
+    });
+  }
+};
+
+
+module.exports = { registerUser,getAllUsers,updateUser,updateAdminStatus,getDonations};
 
 
 

@@ -15,9 +15,23 @@ passport.use(
       callbackURL: process.env.GOOGLE_CALLBACK_URL
     },
     async (accessToken, refreshToken, profile, done) => {
+       //  --------------------volinteer id------------------------------
+  const userlength = await User.countDocuments(); // Get the current user count
+  const genratedvolunteerId = 202500 + userlength; // Generate volunteer ID
+
+  
+  // Check if the generated volunteer ID already exists
+  const existingUser = await User.findOne({ volunteerId: genratedvolunteerId });
+  
+  if (existingUser) {
+    
+      const newUserLength = userlength + 1; // Increment user length for new ID
+      genratedvolunteerId = 202500 + newUserLength; // Create a new volunteer ID
+  }
+  // --------------------------------------------------------
       try {
         // Check if user exists
-        let user = await User.findOne({ googleId: profile.id });
+        let user = await User.findOne({ email: profile.emails[0].value });
       
         if (!user) {
           // Create new user
@@ -26,6 +40,7 @@ passport.use(
             name: profile.displayName,
             email: profile.emails[0].value,
             picture: profile.photos[0].value,
+            volunteerId:genratedvolunteerId
             
             
           });

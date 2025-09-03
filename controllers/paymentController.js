@@ -44,76 +44,7 @@ const createOrder= async (req, res) => {
 
 
 
-// const verifyPayment = async (req, res) => {
-//   try {
-//     const {
-//       razorpay_order_id,
-//       razorpay_payment_id,
-//       razorpay_signature,
-//       name,
-//       email,
-//       mobile,
-//       amount,
-//       campaignId,
-//     } = req.body;
 
-//     const sign = razorpay_order_id + "|" + razorpay_payment_id;
-//     const expectedSign = crypto
-//       .createHmac("sha256", process.env.RAZORPAY_KEY_SECRET)
-//       .update(sign.toString())
-//       .digest("hex");
-
-//     if (razorpay_signature === expectedSign) {
-//       // ✅ Save donation in DB
-//       const donation = new Donation({
-//         campaignId,
-//         name,
-//         email,
-//         mobile,
-//         amount,
-//         razorpay_order_id,
-//         razorpay_payment_id,
-//         razorpay_signature,
-//         status: "success",
-//       });
-
-//       await donation.save();
-//       await updateProductPageGetdonation( name,
-//           email,
-//           mobile,
-//           amount,
-//           razorpay_payment_id,
-//           campaignId
-//           )
-//       // ✅ Send Email to Donor
-//       if (email) {
-//         const subject = "Thank you for your donation 🙏";
-//         const html = `
-//           <h2>Hi ${name},</h2>
-//           <p>Thank you for supporting our campaign ❤️</p>
-//           <p><strong>Amount:</strong> ₹${amount}</p>
-//           <p><strong>Payment ID:</strong> ${razorpay_payment_id}</p>
-//           <p><strong>Order ID:</strong> ${razorpay_order_id}</p>
-//           <br/>
-//           <p>We appreciate your generosity!</p>
-//           <p>- Team Fundraiser</p>
-//         `;
-//         await sendEmail(email, subject, html);
-//       }
-
-//       return res.json({
-//         success: true,
-//         message: "Payment verified & donation saved",
-//         donation,
-//       });
-//     } else {
-//       return res.status(400).json({ success: false, message: "Invalid signature" });
-//     }
-//   } catch (err) {
-//     console.error("Payment verification error:", err);
-//     res.status(500).json({ success: false, message: "Verification failed" });
-//   }
-// };
 
 
 // -----------------------------------------------------------------------------------------------

@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { registerUser, updateUser, getAllUsers, updateAdminStatus } = require('../controllers/userController');
+const { registerUser, updateUser, getAllUsers, updateAdminStatus, getDonations } = require('../controllers/userController');
 const { updateProductPage, slideFun, getSlides, updateSlide, deleteSlide } = require('../controllers/productPageController');
 const { createBlog, getBlogs, updateBlog, deleteBlog } = require('../controllers/blogController');
 
@@ -20,6 +20,9 @@ router.post('/create-blog', createBlog);
 router.get('/get-blog', getBlogs);
 router.patch('/update-blog/:id', updateBlog);
 router.delete('/delete-blog/:id', deleteBlog);
+
+
+router.get('/all-donors', getDonations);
 
 
 
