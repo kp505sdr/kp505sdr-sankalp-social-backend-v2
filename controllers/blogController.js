@@ -1,5 +1,7 @@
 
 const Blog = require('../models/blogModel.js');
+const Contact=require('../models/contactModel.js')
+const nodemailer = require('nodemailer');
 
 // CREATE a new blog
 const createBlog = async (req, res) => {
@@ -73,4 +75,106 @@ const deleteBlog = async (req, res) => {
   }
 };
 
-module.exports = { createBlog, getBlogs, getBlogById, updateBlog, deleteBlog };
+
+
+
+
+// ---------------contact---message--------------------------
+
+const contactMessage =async (req, res) => {
+  try {
+    const { fullName, contactNo, email, subject, message } = req.body;
+
+    // Basic validation
+    if (!fullName || !contactNo || !email || !subject || !message) {
+      return res.status(400).json({ success: false, message: "All fields are required" });
+    }
+
+    // Save to MongoDB
+    const newContact = new Contact({ fullName, contactNo, email, subject, message });
+    await newContact.save();
+
+    // Setup mail transporter
+    const transporter = nodemailer.createTransport({
+      service: "gmail", // or custom SMTP
+      auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS,
+      },
+    });
+
+    // Mail options
+ const mailOptions = {
+  from: `"Sankalp Social Trust" <sankalpsocialtrustsdr@gmail.com>`, // sender (admin)
+  to: email, // user's email
+  subject: "✅ We received your message",
+  text: `
+Hi ${fullName},
+
+Thank you for contacting us! We have received your message and will get back to you as soon as possible.
+
+Here is a copy of your submission:
+
+Name       : ${fullName}
+Contact No : ${contactNo}
+Email      : ${email}
+Subject    : ${subject}
+Message    :
+${message}
+
+Best regards,
+Sankalp Social Trust
+  `,
+  html: `
+    <p>Hi ${fullName},</p>
+    <p>Thank you for contacting us! We have received your message and will get back to you as soon as possible.</p>
+    <p><strong>Subject:</strong> ${subject}</p>
+    <p><strong>Message:</strong><br/>${message}</p>
+    <br/>
+    <p>Best regards,<br/>Sankalp Social Trust</p>
+  `,
+};
+
+     // Mail options2
+   const mailOptions2 = {
+  from: `"${fullName}" <${email}>`, // Shows sender name in email
+  to: "sankalpsocialtrustsdr@gmail.com", // Admin email
+  subject: `📩 New Contact Form Submission: ${subject}`,
+  text: `
+You have received a new contact form submission:
+
+Name       : ${fullName}
+Contact No : ${contactNo}
+Email      : ${email}
+Subject    : ${subject}
+Message    :
+${message}
+
+Please follow up as necessary.
+  `,
+  html: `
+    <h2>New Contact Form Submission</h2>
+    <p><strong>Name:</strong> ${fullName}</p>
+    <p><strong>Contact No:</strong> ${contactNo}</p>
+    <p><strong>Email:</strong> ${email}</p>
+    <p><strong>Subject:</strong> ${subject}</p>
+    <p><strong>Message:</strong><br/>${message}</p>
+    <hr/>
+    <p>Please follow up as necessary.</p>
+  `,
+};
+
+
+    // Send email
+    await transporter.sendMail(mailOptions);
+       await transporter.sendMail(mailOptions2);
+    
+
+    return res.json({ success: true, message: "Message sent and saved successfully!" });
+  } catch (error) {
+    console.error("Error in contact form:", error);
+    return res.status(500).json({ success: false, message: "Something went wrong. Please try again later." });
+  }
+};
+
+module.exports = { createBlog, getBlogs, getBlogById, updateBlog, deleteBlog ,contactMessage};

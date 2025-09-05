@@ -129,6 +129,53 @@ const updateAdminStatus = async (req, res) => {
 
 
 
+// -----------------------------update valteer-status-----------------------------------
+
+const updateValenteerStatus = async (req, res) => {
+  console.log("isVolunteer",req.body.isVolunteer)
+  try {
+    let { googleId, isVolunteer } = req.body;
+
+    if (!googleId) {
+      return res.status(400).json({ message: "Valid googleId is required" });
+    }
+
+    googleId = String(googleId).trim();
+
+    if (typeof isVolunteer === "string") {
+      if (isVolunteer.toLowerCase() === "true") isVolunteer = true;
+      else if (isVolunteer.toLowerCase() === "false") isVolunteer = false;
+      else
+        return res
+          .status(400)
+          .json({ message: "isVolunteer must be boolean or 'true'/'false'" });
+    }
+
+    if (typeof isVolunteer !== "boolean") {
+      return res.status(400).json({ message: "isVolunteer must be boolean" });
+    }
+
+    // Find and update the user
+    const user = await User.findOneAndUpdate(
+      { googleId: googleId },   // find by googleId
+      { isVolunteer: isVolunteer },     // update field
+      { new: true }             // return the updated document
+    );
+
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+ 
+
+    res.json({ message: "Volunteer status updated", user });
+  } catch (err) {
+    console.error("Error updating admin status:", err);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+
+
+
 
 // Get all donations with pagination
 const getDonations = async (req, res) => {
@@ -157,7 +204,7 @@ const getDonations = async (req, res) => {
 };
 
 
-module.exports = { registerUser,getAllUsers,updateUser,updateAdminStatus,getDonations};
+module.exports = { registerUser,getAllUsers,updateUser,updateAdminStatus,updateValenteerStatus,getDonations};
 
 
 
