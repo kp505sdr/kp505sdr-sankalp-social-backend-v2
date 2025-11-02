@@ -32,7 +32,7 @@ const nodemailer = require("nodemailer");
 const transporter = nodemailer.createTransport({
   host: process.env.MAIL_HOST,       // e.g., mail.sankalpsocialtrust.org
   port: process.env.MAIL_PORT,       // e.g., 465
-  secure: process.env.MAIL_SECURE === "true", // true for SSL (465)
+  secure: process.env.MAIL_SECURE, // true for SSL (465)
   auth: {
     user: process.env.EMAIL_USER,    // e.g., help@sankalpsocialtrust.org
     pass: process.env.EMAIL_PASS,    // email password or app password
