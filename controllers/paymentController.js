@@ -107,22 +107,22 @@ const verifyPayment = async (req, res) => {
     await donation.save();
     
 
-    if (email) {
-      await sendEmail(
-        email,
-        "Thank you for your donation 🙏",
-        `
-          <h2>Hi ${name},</h2>
-          <p>Thank you for supporting our campaign ❤️</p>
-          <p><strong>Amount:</strong> ₹${amount}</p>
-          <p><strong>Payment ID:</strong> ${razorpay_payment_id}</p>
-          <p><strong>Order ID:</strong> ${razorpay_order_id}</p>
-          <br/>
-          <p>We appreciate your generosity!</p>
-          <p>- Team Fundraiser</p>
-        `
-      );
-    }
+    // if (email) {
+    //   await sendEmail(
+    //     email,
+    //     "Thank you for your donation 🙏",
+    //     `
+    //       <h2>Hi ${name},</h2>
+    //       <p>Thank you for supporting our campaign ❤️</p>
+    //       <p><strong>Amount:</strong> ₹${amount}</p>
+    //       <p><strong>Payment ID:</strong> ${razorpay_payment_id}</p>
+    //       <p><strong>Order ID:</strong> ${razorpay_order_id}</p>
+    //       <br/>
+    //       <p>We appreciate your generosity!</p>
+    //       <p>- Team Fundraiser</p>
+    //     `
+    //   );
+    // }
 
     return res.json({
       success: true,
