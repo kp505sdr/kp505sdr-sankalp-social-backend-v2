@@ -26,33 +26,28 @@
 
 
 
-require("dotenv").config(); // ✅ load .env file
-const nodemailer = require("nodemailer");
+require("dotenv").config();
+const { Resend } = require("resend");
 
-const transporter = nodemailer.createTransport({
-  host: process.env.MAIL_HOST,       // e.g., mail.sankalpsocialtrust.org
-  port: process.env.MAIL_PORT,       // e.g., 465
-  secure: process.env.MAIL_SECURE, // true for SSL (465)
-  auth: {
-    user: process.env.EMAIL_USER,    // e.g., help@sankalpsocialtrust.org
-    pass: process.env.EMAIL_PASS,    // email password or app password
-  },
-});
+const resend = new Resend(process.env.RESEND_API_KEY);
 
 const sendEmail = async (to, subject, html, attachments = []) => {
   try {
-    await transporter.sendMail({
-      from: `"Sankalp Social Trust" <${process.env.EMAIL_USER}>`,
+    const response = await resend.emails.send({
+      from: `"Sankalp Social Trust" <${process.env.EMAIL_FROM}>`,
       to,
       subject,
       html,
-      attachments,
+      attachments: attachments.map((file) => ({
+        filename: file.filename,
+        content: file.content, // can be Buffer or base64 string
+      })),
     });
-    console.log("✅ Email sent to", to);
+
+    console.log("✅ Email sent to:", to, "Response:", response.id || "no ID");
   } catch (err) {
     console.error("❌ Email sending failed:", err);
   }
 };
 
 module.exports = sendEmail;
-
