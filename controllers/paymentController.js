@@ -12,6 +12,11 @@ const { updateProductPageGetdonation } = require('./productPageController');
 
 
 
+const { Buffer } = require("buffer");
+
+
+
+
 
  
 
@@ -246,6 +251,130 @@ const certiFicate = async (req, res) => {
 
 
 
+
+// ------------------------------send---certificate-by email--------------------
+
+const sendCertificate = async (req, res) => {
+  try {
+    const { razorpay_payment_id } = req.params;
+
+    if (!razorpay_payment_id) {
+      return res.status(400).json({ message: "Payment ID is required" });
+    }
+
+    const donation = await Donation.findOne({ razorpay_payment_id });
+    if (!donation) {
+      return res.status(404).json({ message: "Donation not found" });
+    }
+
+    // Generate PDF in memory
+    const doc = new PDFDocument({ size: "A4", margin: 40 });
+    let buffers = [];
+
+    doc.on("data", buffers.push.bind(buffers));
+    doc.on("end", async () => {
+      const pdfData = Buffer.concat(buffers);
+
+      // Email HTML content
+      const html = `
+        <p>Dear ${donation.name || "Donor"},</p>
+        <p>Thank you for your generous donation of <b>Rs. ${donation.amount}</b> to <b>Sankalp Social Trust</b>.</p>
+        <p>Please find attached your official donation certificate.</p>
+        <p>Best regards,<br/>Sankalp Social Trust</p>
+      `;
+
+      // Send email with Resend
+      await sendEmail(
+        donation.email,
+        "Your Donation Certificate - Sankalp Social Trust",
+        html,
+        [
+          {
+            filename: `Donation_Certificate_${razorpay_payment_id}.pdf`,
+            content: pdfData.toString("base64"), // convert to base64 for Resend
+          },
+        ]
+      );
+
+      res.json({ message: "Certificate emailed successfully!" });
+    });
+
+    // --- PDF Content ---
+    doc.fontSize(10).text(`Darpan Id: UP/2024/0472580`, { align: "left" });
+    doc.fontSize(10).text(`Reg: 202400933010232`, { align: "right" });
+
+    // Logo
+    const logoPath = path.join(__dirname, "../assets/logo.png");
+    try {
+      doc.image(logoPath, doc.page.width / 2 - 30, 50, { width: 60 });
+    } catch {
+      console.log("⚠ Logo not found, skipping...");
+    }
+
+    doc.moveDown(4);
+    doc.fontSize(24).fillColor("#008073").font("Helvetica-BoldOblique")
+      .text("Sankalp Social Trust", { align: "center" });
+
+    doc.moveDown(0.5);
+    doc.fontSize(11).fillColor("gray")
+      .text("Tetari Bazar, Siddharth Nagar, Uttar Pradesh - 272207", { align: "center" });
+
+    doc.moveDown(1);
+    doc.fontSize(18).fillColor("#000").font("Helvetica-Bold")
+      .text("Donation Certificate", { align: "center" });
+
+    doc.moveDown(2);
+    doc.fontSize(12).fillColor("black")
+      .text(`Dear ${donation.name || "Donor"},`, { align: "left" })
+      .moveDown(0.5);
+
+    doc.text(
+      `Thank you for your generosity! On behalf of Sankalp Social Trust, we sincerely appreciate your support. Your donation of Rs. ${donation.amount || "N/A"} has made a meaningful impact on our mission.`,
+      { align: "justify" }
+    ).moveDown(2);
+
+    const col1X = 50;
+    const col2X = 250;
+    const tableTop = doc.y;
+
+    const formatDate = (date) => {
+      if (!date) return "N/A";
+      const d = new Date(date);
+      return `${String(d.getDate()).padStart(2, "0")}/${String(
+        d.getMonth() + 1
+      ).padStart(2, "0")}/${d.getFullYear()}`;
+    };
+
+    const addRow = (label, value) => {
+      doc.font("Helvetica-Bold").fontSize(11).text(label, col1X, doc.y, { continued: true });
+      doc.font("Helvetica").text(value, col2X, doc.y);
+      doc.moveDown(0.7);
+    };
+
+    doc.rect(col1X - 5, tableTop - 5, 500, 90).stroke();
+    addRow("Donation Date:", formatDate(donation.createdAt));
+    addRow("Donation Amount:", `Rs. ${donation.amount || "N/A"}`);
+    addRow("Payment Id:", donation.razorpay_payment_id);
+    addRow("Event Id:", donation._id.toString());
+
+    doc.moveDown(3);
+    doc.fillColor("blue").fontSize(12)
+      .text("www.sankalpsocialtrust.org", {
+        align: "center",
+        link: "http://www.sankalpsocialtrust.org",
+      });
+
+    doc.moveDown(1);
+    doc.fillColor("black").fontSize(11).text("Digitally Signed", { align: "center" });
+    doc.end();
+  } catch (error) {
+    console.error("❌ Error generating certificate:", error);
+    res.status(500).json({ message: "Server error generating certificate" });
+  }
+};
+
+
+
             
 
-module.exports={createOrder,verifyPayment,certiFicate}
+module.exports={createOrder,verifyPayment,certiFicate,sendCertificate}
