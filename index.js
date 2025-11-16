@@ -73,6 +73,7 @@ app.get(
       `${process.env.CLIENT_URL}/login-success?token=${token}` +
       `&name=${encodeURIComponent(req.user.name || "")}` +
       `&isAdmin=${encodeURIComponent(req.user.isAdmin || false)}` +
+       `&isVolunteer=${encodeURIComponent(req.user.isVolunteer || false)}` +
       `&email=${encodeURIComponent(req.user.email || "")}` +
       `&picture=${encodeURIComponent(req.user.picture || "")}`
     );

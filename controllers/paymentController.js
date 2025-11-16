@@ -4,18 +4,15 @@ require('dotenv').config();
 const Razorpay  = require('razorpay');
 const crypto  = require('crypto');
 const Donation = require('../models/donationModel');
+const Certificate80=require('../models/certificateModel');
 const sendEmail = require('../utils/sendEmail');
 const PDFDocument = require("pdfkit");
 const path = require("path");
-const { updateProductPageGetdonation } = require('./productPageController');
-
-
-
-
 const { Buffer } = require("buffer");
 
 
-
+const fs = require("fs");
+const pdf = require("html-pdf");
 
 
  
@@ -375,6 +372,197 @@ const sendCertificate = async (req, res) => {
 
 
 
-            
+// ------------------------send-80certificate--------------------------------------------
 
-module.exports={createOrder,verifyPayment,certiFicate,sendCertificate}
+
+
+
+
+
+
+const send80gCertificate = async (req, res) => {
+  try {
+    const {
+      donorName,
+      donorEmail,
+      donorAddress,
+      donorMobile,
+      donationAmount,
+      purpose,
+      paymentMode,
+      genratedBy,
+    } = req.body;
+
+    // Save to DB
+    const cert = new Certificate80({
+      donorName,
+      donorEmail,
+      donorAddress,
+      donorMobile,
+      donationAmount,
+      purpose,
+      paymentMode,
+      genratedBy,
+    });
+    await cert.save();
+
+    // Load logo and convert to Base64
+    const logoPath = path.join(__dirname, "../assets/logo.png");
+    const logoBase64 = fs.readFileSync(logoPath, { encoding: "base64" });
+
+    // --- Your same design ---
+    const htmlContent = `
+      <html>
+        <head>
+          <meta charset="UTF-8" />
+          <title>80G Donation Certificate</title>
+          <style>
+            body {
+              font-family: 'Poppins', sans-serif;
+              background: #fff;
+              padding: 40px;
+              color: #111827;
+            }
+            .certificate {
+              border: 1px solid #d1d5db;
+              padding: 30px 50px;
+              border-radius: 10px;
+              box-shadow: 0 0 10px rgba(0,0,0,0.05);
+              max-width: 700px;
+              margin: auto;
+              text-align: center;
+            }
+            .logo {
+              width: 80px;
+              margin-bottom: 10px;
+            }
+            h1 {
+              color: #0f766e;
+              font-size: 24px;
+              margin: 0;
+            }
+            h2 {
+              color: #0f766e;
+              font-size: 20px;
+              margin-top: 30px;
+            }
+            p {
+              font-size: 16px;
+              line-height: 1.6;
+              margin: 8px 0;
+            }
+            .info {
+              text-align: left;
+              display: grid;
+              grid-template-columns: 1fr 1fr;
+              gap: 6px 20px;
+              margin-top: 20px;
+              font-size: 15px;
+            }
+            .footer {
+              margin-top: 30px;
+              font-size: 13px;
+              color: #555;
+            }
+            .highlight {
+              font-weight: 600;
+              color: #111827;
+            }
+          </style>
+        </head>
+        <body>
+          <div class="certificate">
+            <img src="data:image/png;base64,${logoBase64}" alt="Logo" class="logo" />
+            <h1>Sankalp Social Trust</h1>
+            <p>Tetari Bazar, Siddharth Nagar, Uttar Pradesh - 272207</p>
+            <p><strong>PAN:</strong> ABKTS4994E &nbsp; | &nbsp; <strong>80G URN No:</strong> ABKTS4994EF20251</p>
+            <hr style="margin: 20px 0; border: none; border-top: 1px solid #d1d5db;" />
+            <h2>80G Donation Certificate</h2>
+            <p><em>This is to certify that <span class="highlight">${donorName}</span> has generously donated a sum of ₹${donationAmount} towards the <strong>${purpose}</strong> supported by Sankalp Social Trust.</em></p>
+
+            <div class="info">
+              <p><strong>Receipt No:</strong> ${cert._id}</p>
+              <p><strong>Transaction ID:</strong> N/A</p>
+              <p><strong>Donation Amount:</strong> ₹${donationAmount}</p>
+              <p><strong>Date:</strong> ${new Date().toLocaleDateString()}</p>
+              <p><strong>Donor Mobile:</strong> ${donorMobile}</p>
+              <p><strong>Donor Email:</strong> ${donorEmail}</p>
+              <p><strong>Donor Address:</strong> ${donorAddress}</p>
+              <p><strong>Payment Mode:</strong> ${paymentMode || "Cash"}</p>
+            </div>
+
+            <p class="footer">
+              This donation qualifies for deduction under Section 80G of the Income Tax Act, 1961.
+              Please retain this certificate for your records.
+            </p>
+
+            <p style="font-size: 13px; margin-top: 10px;">
+              <strong>This is a system-generated certificate. No signature is required.</strong>
+            </p>
+             <p style="font-size: 10px; margin-top: 10px  color: #094fe7ff;">
+              <strong>help@sankalpsocialtrust.org | +91- 8115784664</strong>
+            </p>
+          </div>
+        </body>
+      </html>
+    `;
+
+    // Generate PDF using html-pdf
+    pdf.create(htmlContent, { format: "A4" }).toBuffer(async (err, buffer) => {
+      if (err) {
+        console.error("❌ PDF generation failed:", err);
+        return res.status(500).json({ error: "PDF generation failed" });
+      }
+
+      try {
+        const emailHtml = `
+          <p>Dear ${donorName},</p>
+          <p>Thank you for your generous donation of ₹${donationAmount} towards <strong>${purpose}</strong>.</p>
+          <p>Please find attached your official 80G Donation Certificate.</p>
+          <br/>
+          <p>Warm regards,<br/>Sankalp Social Trust</p>
+        `;
+
+        await sendEmail(
+          donorEmail,
+          "Your 80G Donation Certificate",
+          emailHtml,
+          [
+            {
+              filename: "80G-Certificate.pdf",
+              content: buffer,
+            },
+          ]
+        );
+
+        res.json({ message: "✅ Certificate saved & emailed successfully!" });
+      } catch (emailError) {
+        console.error("❌ Email sending failed:", emailError);
+        res.status(500).json({ error: "Email sending failed" });
+      }
+    });
+  } catch (error) {
+    console.error("❌ Server error:", error);
+    res.status(500).json({ error: "Server error" });
+  }
+};
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+module.exports={createOrder,verifyPayment,certiFicate,sendCertificate,send80gCertificate}
