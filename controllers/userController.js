@@ -57,25 +57,25 @@ const getAllUsers = async (req, res) => {
 // ---------------------update-user-----------------------------------
 
 const updateUser = async (req, res) => {
-  const { id } = req.params;
-  const { name, email, mobile, password } = req.body;
+  
+  const { name, email, mobile,address,dob,nationality,education,picture } = req.body;
 
   try {
-    const user = await User.findById(id);
+    const user = await User.findOne({ email });
     if (!user) return res.status(404).json({ message: 'User not found' });
 
     if (name) user.name = name;
-    if (email) user.email = email;
+    if (address) user.address = address;
     if (mobile) user.mobile = mobile;
-    if (password) {
-      const salt = await bcrypt.genSalt(10);
-      user.password = await bcrypt.hash(password, salt);
-    }
+    if (dob) user.dob = dob;
+    if (nationality) user.nationality = nationality;
+    if (education) user.education = education;
+     if (picture) user.picture = picture;
+
+
 
     await user.save();
-
-    const { password: pwd, ...userWithoutPassword } = user.toObject();
-    res.json(userWithoutPassword);
+    res.json(user);
 
   } catch (error) {
     console.error(error);

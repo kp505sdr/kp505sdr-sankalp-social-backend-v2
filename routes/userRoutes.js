@@ -5,7 +5,7 @@ const { updateProductPage, slideFun, getSlides, updateSlide, deleteSlide } = req
 const { createBlog, getBlogs, updateBlog, deleteBlog, contactMessage } = require('../controllers/blogController');
 
 router.post('/register', registerUser);
-router.put('/:id', updateUser);
+router.put('/update-profile', updateUser);
 router.get('/get-all-users', getAllUsers)
 router.patch('/update-product/:id',updateProductPage)
 router.patch('/isadmin-update', updateAdminStatus)

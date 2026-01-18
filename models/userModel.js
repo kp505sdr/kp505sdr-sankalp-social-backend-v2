@@ -5,6 +5,11 @@ const userSchema = new mongoose.Schema(
     googleId: { type: String, required: true },
     name: { type: String },
     email: { type: String },
+    mobile: { type: Number },
+    address:{ type: String },
+    dob:{ type: Date }, 
+    nationality:{ type: String },
+    education:{ type: String },
     picture: { type: String },
     isAdmin: { type: Boolean, default: false },
     isVolunteer:{
