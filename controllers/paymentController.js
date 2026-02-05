@@ -391,7 +391,11 @@ const send80gCertificate = async (req, res) => {
       purpose,
       paymentMode,
       genratedBy,
+      donationMode,
+      utrNumber,
+      donorPan
     } = req.body;
+  
 
     // Save to DB
     const cert = new Certificate80({
@@ -400,9 +404,13 @@ const send80gCertificate = async (req, res) => {
       donorAddress,
       donorMobile,
       donationAmount,
+      donorPan,
       purpose,
       paymentMode,
       genratedBy,
+      donationMode,
+      utrNumber,
+     
     });
     await cert.save();
 
@@ -417,57 +425,74 @@ const send80gCertificate = async (req, res) => {
           <meta charset="UTF-8" />
           <title>80G Donation Certificate</title>
           <style>
-            body {
-              font-family: 'Poppins', sans-serif;
-              background: #fff;
-              padding: 40px;
-              color: #111827;
-            }
-            .certificate {
-              border: 1px solid #d1d5db;
-              padding: 30px 50px;
-              border-radius: 10px;
-              box-shadow: 0 0 10px rgba(0,0,0,0.05);
-              max-width: 700px;
-              margin: auto;
-              text-align: center;
-            }
-            .logo {
-              width: 80px;
-              margin-bottom: 10px;
-            }
-            h1 {
-              color: #0f766e;
-              font-size: 24px;
-              margin: 0;
-            }
-            h2 {
-              color: #0f766e;
-              font-size: 20px;
-              margin-top: 30px;
-            }
-            p {
-              font-size: 16px;
-              line-height: 1.6;
-              margin: 8px 0;
-            }
-            .info {
-              text-align: left;
-              display: grid;
-              grid-template-columns: 1fr 1fr;
-              gap: 6px 20px;
-              margin-top: 20px;
-              font-size: 15px;
-            }
-            .footer {
-              margin-top: 30px;
-              font-size: 13px;
-              color: #555;
-            }
-            .highlight {
-              font-weight: 600;
-              color: #111827;
-            }
+         body {
+  font-family: 'Poppins', sans-serif;
+  background: #fff;
+  padding: 20px;
+  color: #111827;
+  font-size: 13px;
+}
+
+.certificate {
+  border: 1px solid #d1d5db;
+  padding: 22px 30px;
+  border-radius: 10px;
+  max-width: 680px;
+  margin: auto;
+  text-align: center;
+}
+
+.logo {
+  width: 65px;
+  margin-bottom: 8px;
+}
+
+h1 {
+  color: #0f766e;
+  font-size: 20px;
+  margin: 0;
+}
+
+h2 {
+  color: #0f766e;
+  font-size: 17px;
+  margin: 16px 0 8px;
+}
+
+p {
+  font-size: 13px;
+  line-height: 1.45;
+  margin: 6px 0;
+}
+
+.info {
+  text-align: left;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px 16px;
+  margin-top: 14px;
+  font-size: 12.5px;
+}
+
+.footer {
+  margin-top: 14px;
+  font-size: 11.5px;
+  color: #555;
+}
+
+.highlight {
+  font-weight: 600;
+  color: #111827;
+}
+
+hr {
+  margin: 14px 0;
+}
+
+p { line-height: 1.4; }
+.certificate { padding: 20px 26px; }
+.info { gap: 5px 14px; }
+
           </style>
         </head>
         <body>
@@ -481,12 +506,13 @@ const send80gCertificate = async (req, res) => {
             <p><em>This is to certify that <span class="highlight">${donorName}</span> has generously donated a sum of ₹${donationAmount} towards the <strong>${purpose}</strong> supported by Sankalp Social Trust.</em></p>
 
             <div class="info">
-              <p><strong>Receipt No:</strong> ${cert._id}</p>
+              <p><strong>Receipt No:</strong>${cert._id}</p>
               <p><strong>Transaction ID:</strong> N/A</p>
               <p><strong>Donation Amount:</strong> ₹${donationAmount}</p>
               <p><strong>Date:</strong> ${new Date().toLocaleDateString()}</p>
               <p><strong>Donor Mobile:</strong> ${donorMobile}</p>
               <p><strong>Donor Email:</strong> ${donorEmail}</p>
+              <p><strong>Donor PAN:</strong> ${donorPan}</p>
               <p><strong>Donor Address:</strong> ${donorAddress}</p>
               <p><strong>Payment Mode:</strong> ${paymentMode || "Cash"}</p>
             </div>
@@ -497,7 +523,7 @@ const send80gCertificate = async (req, res) => {
             </p>
 
             <p style="font-size: 13px; margin-top: 10px;">
-              <strong>This is a system-generated certificate. No signature is required.</strong>
+              <strong>This is a system generated certificate. No signature is required.</strong>
             </p>
              <p style="font-size: 10px; margin-top: 10px  color: #094fe7ff;">
               <strong>help@sankalpsocialtrust.org | +91- 8115784664</strong>
@@ -550,6 +576,24 @@ const send80gCertificate = async (req, res) => {
 
 
 
+const getAll80Gcertificate=async(req,res)=>{
+  try {
+    // Fetch all certificates from the database
+    const certificates = await Certificate80.find();
+
+    // Check if no certificates found
+    if (certificates.length === 0) {
+      return res.status(404).json({ message: 'No certificates found' });
+    }
+
+    // Send the list of certificates as the response
+    res.status(200).json({ certificates });
+  } catch (error) {
+    console.error('Error fetching certificates:', error);
+    res.status(500).json({ message: 'Error fetching certificates', error });
+  }
+
+}
 
 
 
@@ -564,5 +608,4 @@ const send80gCertificate = async (req, res) => {
 
 
 
-
-module.exports={createOrder,verifyPayment,certiFicate,sendCertificate,send80gCertificate}
+module.exports={createOrder,verifyPayment,certiFicate,sendCertificate,send80gCertificate,getAll80Gcertificate}
